@@ -106,11 +106,12 @@ def main():
         print("Using standard AdamW")
 
     # Scheduler (cosine with warmup)
-    warmup_steps = min(2000, args.max_steps // 10)
+    actual_opt_steps = args.max_steps // args.grad_accum
+    warmup_steps = min(200, actual_opt_steps // 10)
     scheduler = torch.optim.lr_scheduler.OneCycleLR(
         optimizer, max_lr=args.lr,
-        total_steps=args.max_steps,
-        pct_start=warmup_steps / args.max_steps,
+        total_steps=actual_opt_steps,
+        pct_start=warmup_steps / actual_opt_steps,
         anneal_strategy='cos',
     )
 

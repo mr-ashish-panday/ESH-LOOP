@@ -121,33 +121,37 @@ class MoELayer(nn.Module):
 
     def forward(self, x: torch.Tensor):
         B, L, D = x.shape
+        flat_x = x.view(-1, D)  # [B*L, D]
 
         # Gating
-        gate_logits = self.gate(x)  # [B, L, n_experts]
+        gate_logits = self.gate(flat_x)  # [B*L, n_experts]
         gate_probs = F.softmax(gate_logits, dim=-1)
 
         # Top-k selection
         top_k_probs, top_k_indices = torch.topk(gate_probs, self.top_k, dim=-1)
         top_k_probs = top_k_probs / (top_k_probs.sum(dim=-1, keepdim=True) + 1e-8)
 
-        # Load balancing loss
-        expert_usage = gate_probs.mean(dim=[0, 1])
-        self.load_balance_loss = (expert_usage * torch.log(expert_usage + 1e-8)).sum()
+        # Load balancing loss (negative entropy → encourage uniform distribution)
+        expert_usage = gate_probs.mean(dim=0)
+        self.load_balance_loss = -(expert_usage * torch.log(expert_usage + 1e-8)).sum()
 
-        # Process through top-k experts
-        output = torch.zeros_like(x)
-        for k in range(self.top_k):
-            expert_idx = top_k_indices[:, :, k]  # [B, L]
-            weight = top_k_probs[:, :, k:k+1]    # [B, L, 1]
+        # Batched expert computation (much faster than Python loops)
+        output = torch.zeros_like(flat_x)
+        for e_idx in range(self.n_experts):
+            # Find all tokens assigned to this expert (across all top-k slots)
+            expert_mask = (top_k_indices == e_idx)  # [B*L, top_k]
+            token_mask = expert_mask.any(dim=-1)     # [B*L]
 
-            for e_idx in range(self.n_experts):
-                mask = (expert_idx == e_idx)
-                if mask.any():
-                    expert_input = x[mask]  # [N, D]
-                    expert_output = self.experts[e_idx](expert_input)
-                    output[mask] += weight[mask] * expert_output
+            if not token_mask.any():
+                continue
 
-        return output
+            # Get weights for this expert
+            weights = (top_k_probs * expert_mask.float()).sum(dim=-1)  # [B*L]
+            expert_input = flat_x[token_mask]
+            expert_output = self.experts[e_idx](expert_input)
+            output[token_mask] += weights[token_mask].unsqueeze(-1) * expert_output
+
+        return output.view(B, L, D)
 
 
 # ─── LayerScale ──────────────────────────────────────────────────
