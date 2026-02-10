@@ -267,14 +267,15 @@ class ESHLoopBlock(nn.Module):
 
         # Store ponder stats
         self._ponder_steps_used = ponder_steps.detach()
-        self._ponder_cost = total_ponder_cost / self.max_ponder_steps
+        # Keep as LIVE TENSOR for gradient flow to halt_net!
+        self._ponder_cost = total_ponder_cost
 
         x = accumulated + residual  # Residual connection
 
         ponder_info = {
             "avg_ponder_steps": ponder_steps.mean().item(),
             "max_ponder_steps": ponder_steps.max().item(),
-            "ponder_cost": self._ponder_cost.item() if torch.is_tensor(self._ponder_cost) else self._ponder_cost,
+            "ponder_cost": self._ponder_cost.detach().item() if torch.is_tensor(self._ponder_cost) else self._ponder_cost,
         }
 
         if return_ponder_info:

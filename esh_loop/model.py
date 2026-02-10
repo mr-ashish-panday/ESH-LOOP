@@ -25,7 +25,7 @@ class ESHLoopConfig:
     max_ponder_steps: int = 3    # Max re-processing iterations
     dropout: float = 0.1
     layer_scale_init: float = 1e-5
-    ponder_cost_weight: float = 0.01  # λ for ponder regularization
+    ponder_cost_weight: float = 0.1  # λ for ponder regularization (was 0.01, too weak)
     use_checkpoint: bool = False
 
 
@@ -108,18 +108,19 @@ class ESHLoopModel(nn.Module):
 
         # Process through ESH-Loop blocks
         routing_stats = []
-        total_ponder_cost = 0.0
         total_ponder_steps = 0.0
 
         for block in self.blocks:
             x, ponder_info = block(x, mask=mask)
-            total_ponder_cost += ponder_info["ponder_cost"]
             total_ponder_steps += ponder_info["avg_ponder_steps"]
 
             if return_routing_stats:
                 stats = block.get_routing_stats()
                 stats.update(ponder_info)
                 routing_stats.append(stats)
+
+        # Ponder cost: accumulate as LIVE TENSORS for gradient flow
+        total_ponder_cost = sum(block._ponder_cost for block in self.blocks)
 
         # Output
         x = self.norm_f(x)
