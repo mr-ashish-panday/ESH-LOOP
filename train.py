@@ -39,6 +39,7 @@ def main():
     parser.add_argument("--save_every", type=int, default=5000)
     parser.add_argument("--checkpoint_dir", type=str, default="./checkpoints")
     parser.add_argument("--device", type=str, default="auto")
+    parser.add_argument("--resume", type=str, default=None, help="Path to checkpoint to resume from")
     args = parser.parse_args()
 
     # Device
@@ -144,6 +145,10 @@ def main():
     print(f"{'=' * 60}")
     print(f"\nKey metric to watch: 'Ponder' (avg ponder steps per token)")
     print(f"Expected: Easy tokens → ~1.0, Hard tokens → ~{args.max_ponder_steps}.0\n")
+
+    if args.resume:
+        print(f"Resuming from checkpoint: {args.resume}")
+        trainer.load_checkpoint(args.resume)
 
     trainer.train(max_steps=args.max_steps, save_every=args.save_every)
 
