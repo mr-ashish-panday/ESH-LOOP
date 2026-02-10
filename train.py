@@ -25,16 +25,17 @@ from data_loader import create_data_loaders
 def main():
     parser = argparse.ArgumentParser(description="Train ESH-Loop")
     parser.add_argument("--max_steps", type=int, default=25000)
-    parser.add_argument("--batch_size", type=int, default=4)
-    parser.add_argument("--grad_accum", type=int, default=8)
+    parser.add_argument("--batch_size", type=int, default=2)
+    parser.add_argument("--grad_accum", type=int, default=16)
     parser.add_argument("--lr", type=float, default=3e-4)
     parser.add_argument("--max_ponder_steps", type=int, default=3)
     parser.add_argument("--ponder_cost_weight", type=float, default=0.01)
     parser.add_argument("--d_model", type=int, default=768)
     parser.add_argument("--n_layers", type=int, default=8)
     parser.add_argument("--n_heads", type=int, default=12)
-    parser.add_argument("--n_experts", type=int, default=8)
-    parser.add_argument("--max_seq_len", type=int, default=512)
+    parser.add_argument("--n_experts", type=int, default=4)
+    parser.add_argument("--expert_dim", type=int, default=2048)
+    parser.add_argument("--max_seq_len", type=int, default=256)
     parser.add_argument("--save_every", type=int, default=5000)
     parser.add_argument("--checkpoint_dir", type=str, default="./checkpoints")
     parser.add_argument("--device", type=str, default="auto")
@@ -60,6 +61,7 @@ def main():
         n_layers=args.n_layers,
         n_heads=args.n_heads,
         n_experts=args.n_experts,
+        expert_dim=args.expert_dim,
         max_seq_len=args.max_seq_len,
         max_ponder_steps=args.max_ponder_steps,
         ponder_cost_weight=args.ponder_cost_weight,
