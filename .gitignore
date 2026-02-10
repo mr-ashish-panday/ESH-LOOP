@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+*.pt
+checkpoints/
+figures/
+*.json
+wandb/
+.DS_Store
