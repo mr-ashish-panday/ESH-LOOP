@@ -49,7 +49,22 @@ class ESHLoopTrainer:
                                return_routing_stats=True)
             loss = outputs["loss"]
             aux_loss = outputs["aux_loss"]
-            total_loss = loss + aux_loss
+
+            # Ponder cost warmup: let model learn to USE pondering first,
+            # then gradually introduce the cost to encourage efficiency.
+            # Steps 0-15k: no ponder cost (learn to ponder)
+            # Steps 15k-25k: ramp up (learn to be efficient)
+            # Steps 25k+: full cost
+            warmup_start = 15000
+            warmup_end = 25000
+            if self.global_step < warmup_start:
+                ponder_scale = 0.0
+            elif self.global_step < warmup_end:
+                ponder_scale = (self.global_step - warmup_start) / (warmup_end - warmup_start)
+            else:
+                ponder_scale = 1.0
+
+            total_loss = loss + ponder_scale * aux_loss
 
             # Scale for gradient accumulation
             total_loss = total_loss / self.grad_accum_steps
