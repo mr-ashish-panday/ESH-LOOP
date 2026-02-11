@@ -18,8 +18,8 @@ from esh_loop import ESHLoopModel, ESHLoopConfig
 
 def create_model():
     config = ESHLoopConfig(
-        d_model=768, n_layers=8, n_heads=12, n_experts=8,
-        expert_dim=3072, max_seq_len=2048,
+        d_model=768, n_layers=8, n_heads=12, n_experts=4,
+        expert_dim=2048, max_seq_len=256,
         max_ponder_steps=3, dropout=0.0, layer_scale_init=1e-5,
     )
     return ESHLoopModel(config), config
