@@ -25,7 +25,7 @@ class ESHLoopConfig:
     max_ponder_steps: int = 3    # Max re-processing iterations
     dropout: float = 0.1
     layer_scale_init: float = 1e-5
-    ponder_cost_weight: float = 0.1  # λ for ponder regularization (was 0.01, too weak)
+    ponder_cost_weight: float = 0.03  # λ for ponder regularization (sweet spot)
     use_checkpoint: bool = False
 
 

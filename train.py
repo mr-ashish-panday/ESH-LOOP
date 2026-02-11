@@ -29,7 +29,7 @@ def main():
     parser.add_argument("--grad_accum", type=int, default=16)
     parser.add_argument("--lr", type=float, default=3e-4)
     parser.add_argument("--max_ponder_steps", type=int, default=3)
-    parser.add_argument("--ponder_cost_weight", type=float, default=0.1)
+    parser.add_argument("--ponder_cost_weight", type=float, default=0.03)
     parser.add_argument("--d_model", type=int, default=768)
     parser.add_argument("--n_layers", type=int, default=8)
     parser.add_argument("--n_heads", type=int, default=12)
